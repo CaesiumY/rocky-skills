@@ -1,0 +1,35 @@
+# OMC state / session files
+.omc/
+
+# Packaging artifacts
+dist/
+
+# Skill-creator workspace output
+*-workspace/
+hail-mary-rocky-workspace/
+
+# User feedback from eval viewer
+feedback.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
