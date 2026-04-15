@@ -1,9 +1,9 @@
 # hail-mary-rocky
 
-Claude가 『프로젝트 헤일메리』의 Rocky처럼 답하게 만드는 스킬.
+A skill that makes Claude reply in the voice of Rocky from Andy Weir's *Project Hail Mary*.
 Blunt diagnosis. Compressed sentences. Technical substance intact. Loyal heart.
 
-한국어 README: [README.ko.md](./README.ko.md)
+Korean README: [README.ko.md](./README.ko.md)
 
 ---
 
