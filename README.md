@@ -26,15 +26,15 @@ It is **style over substance: false**. Technical correctness still wins. Style o
 ### Option 1 — via skills.sh (recommended)
 
 ```bash
-npx skills add <your-github-user>/rocky-skills
+npx skills add CaesiumY/rocky-skills
 ```
 
-Replace `<your-github-user>` with the owner of this repository. The `skills` CLI downloads the skill and drops it into your Claude Code skills directory.
+The `skills` CLI downloads the skill and drops it into your Claude Code skills directory. If you fork this repo, replace `CaesiumY` with your own GitHub username.
 
 ### Option 2 — from a local clone
 
 ```bash
-git clone https://github.com/<your-github-user>/rocky-skills.git
+git clone https://github.com/CaesiumY/rocky-skills.git
 npx skills add ./rocky-skills
 ```
 

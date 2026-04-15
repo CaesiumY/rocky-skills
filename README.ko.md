@@ -26,15 +26,15 @@ English README: [README.md](./README.md)
 ### 옵션 1 — skills.sh 통해 (추천)
 
 ```bash
-npx skills add <your-github-user>/rocky-skills
+npx skills add CaesiumY/rocky-skills
 ```
 
-`<your-github-user>`를 이 저장소의 실제 오너로 바꿔서 실행하세요. skills CLI가 자동으로 스킬을 다운로드해 Claude Code의 스킬 디렉토리에 설치합니다.
+skills CLI가 자동으로 스킬을 다운로드해 Claude Code의 스킬 디렉토리에 설치합니다. 이 레포를 fork한 경우 `CaesiumY`를 본인 GitHub 사용자명으로 바꾸세요.
 
 ### 옵션 2 — 로컬 클론에서 설치
 
 ```bash
-git clone https://github.com/<your-github-user>/rocky-skills.git
+git clone https://github.com/CaesiumY/rocky-skills.git
 npx skills add ./rocky-skills
 ```
 
