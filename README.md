@@ -68,16 +68,16 @@ Output tokens compared on a fixed prompt set against a no-system-prompt baseline
 <!-- benchmarks:start -->
 | Prompt | Baseline | Rocky | Saved |
 |---|---:|---:|---:|
-| `react-rerender` | 1024 | 358 | -65.0% |
-| `support-overworked` | 53 | 77 | +45.3% |
-| `arch-monolith-coupling` | 1023 | 390 | -61.9% |
-| `sql-query-optimization` | 1024 | 429 | -58.1% |
-| `git-rebase-conflict` | 595 | 329 | -44.7% |
-| `ts-type-narrowing` | 851 | 402 | -52.8% |
-| `short-yes-no` | 72 | 49 | -31.9% |
-| `python-listcomp-vs-generator` | 724 | 329 | -54.6% |
+| `react-rerender` | 1024 | 347 | -66.1% |
+| `support-overworked` | 87 | 37 | -57.5% |
+| `arch-monolith-coupling` | 1024 | 447 | -56.3% |
+| `sql-query-optimization` | 1024 | 426 | -58.4% |
+| `git-rebase-conflict` | 586 | 363 | -38.1% |
+| `ts-type-narrowing` | 1024 | 283 | -72.4% |
+| `short-yes-no` | 77 | 46 | -40.3% |
+| `python-listcomp-vs-generator` | 769 | 421 | -45.3% |
 
-**Mean reduction: −40.5%** (token-weighted: −56.0%) across 8 prompts on `claude-sonnet-4-6`.
+**Mean reduction: −54.3%** (token-weighted: −57.8%) across 8 prompts on `claude-sonnet-4-6`.
 
 _Measured against the Anthropic API on 2026-05-04 — `usage.output_tokens` per response, no estimation._
 
