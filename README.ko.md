@@ -96,36 +96,37 @@ python benchmarks/render_readme_table.py
 
 ## 활성화
 
-**디폴트 always-on** — 6개 지원 에이전트 중 5개에서 어댑터 파일만 프로젝트에 두면 모든 응답이 Rocky 보이스로 나옵니다. 매 세션 트리거 불필요. 경계(코드 블록·커밋·법률 텍스트)는 `SKILL.md`의 규칙이 자동 처리하므로 always-on이라도 안전.
+**6개 에이전트 모두 디폴트 always-on.** 어댑터 파일을 프로젝트에 두거나 인스톨러를 돌리면 모든 응답이 Rocky 보이스 — 매 세션 트리거 불필요. 경계(코드 블록·커밋·법률 텍스트)는 `SKILL.md`의 규칙이 자동 처리하므로 always-on이라도 안전.
 
 | 에이전트 | 설치 후 디폴트 상태 |
 |---|---|
+| Claude Code | always-on (`install.sh` / `install.ps1`이 규칙을 `CLAUDE.md`에 병합) |
 | Cursor | always-on (`.cursor/rules/rocky.md`의 `alwaysApply: true`) |
 | Windsurf | always-on (`trigger: always_on`) |
 | Cline | always-on (`.clinerules` 자동 로드) |
 | Codex / 범용 | always-on (`AGENTS.md` 자동 로드) |
 | Gemini CLI | always-on (`GEMINI.md` 자동 로드) |
-| Claude Code | 트리거 기반 (아래 참고) |
-
-### Claude Code: 트리거 또는 always-on
-
-Claude Code의 스킬은 description 매칭으로 자동 invoke됩니다. 우리 description은 의도적으로 넓어서 "rocky" / "로키" / "rocky mode" / "caveman mode" / "헤일메리" 또는 "더 짧게 / 더 싸게 / verdict-first" 같은 신호 하나면 활성화.
-
-다른 에이전트처럼 결정론적 always-on을 원하면 `CLAUDE.md`에 어댑터 추가:
-
-```bash
-cat AGENTS.md >> ~/.claude/CLAUDE.md   # 전역 (모든 프로젝트)
-cat AGENTS.md >> ./CLAUDE.md           # 현재 프로젝트만
-```
-
-`CLAUDE.md`는 모든 Claude Code 세션의 기본 컨텍스트로 자동 로드되므로 트리거 없이 적용됩니다.
 
 ### 끄기와 다시 켜기
+
+끄기 스위치는 보이스가 부적절한 일회성 작업(긴 문서, 공식 이메일)을 위함:
 
 - 현재 세션 한정으로 끄기: `normal mode` / `일반 모드` / `rocky off` / `stop caveman`
 - 다시 켜기: `rocky` / `로키` / `rocky mode` / `caveman mode` / `헤일메리`
 
-끄기 스위치는 보이스가 부적절한 일회성 작업(긴 문서, 공식 이메일)을 위함. 새 세션은 다시 always-on 상태로 시작.
+새 세션은 다시 always-on 상태로 시작.
+
+### CLAUDE.md 머지를 건너뛰고 싶다면 (Claude Code만)
+
+Claude Code 스킬을 순수 트리거 기반(skill description 매칭 시에만 자동 invoke)으로 두고 싶으면 인스톨러에 `--skip-claude-md` 플래그:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CaesiumY/rocky-skills/main/install.sh | bash -s -- --skip-claude-md
+# PowerShell
+iex "& { $(irm https://raw.githubusercontent.com/CaesiumY/rocky-skills/main/install.ps1) } -SkipClaudeMd"
+```
+
+인스톨러는 `CLAUDE.md` 안에 마커 블록(`<!-- rocky-skills:start --> ... <!-- rocky-skills:end -->`)을 관리합니다. 재실행 시 블록을 in-place로 교체하므로 중복되지 않습니다. 되돌리려면 블록을 수동 삭제.
 
 ---
 

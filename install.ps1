@@ -8,12 +8,18 @@
 #   irm https://raw.githubusercontent.com/CaesiumY/rocky-skills/main/install.ps1 | iex
 #   .\install.ps1 -Target project        # install into .\.claude\skills\ instead of ~\.claude\skills\
 #   .\install.ps1 -WithSpinner           # also merge spinner verbs into settings.json
+#   .\install.ps1 -SkipClaudeMd          # skip CLAUDE.md merge (skill stays trigger-based)
 #   .\install.ps1 -Ref v1.2.3            # pin to a tag/branch (default: main)
+#
+# Default: skill is installed AND Rocky's rules are merged into CLAUDE.md
+# (idempotent, marker-bounded), so Claude Code is always-on like the other
+# adapters. Pass -SkipClaudeMd to keep the skill trigger-based only.
 
 [CmdletBinding()]
 param(
     [ValidateSet('global','project')] [string]$Target = 'global',
     [switch]$WithSpinner,
+    [switch]$SkipClaudeMd,
     [string]$Ref = 'main'
 )
 
@@ -21,11 +27,13 @@ $ErrorActionPreference = 'Stop'
 $Repo = 'CaesiumY/rocky-skills'
 
 if ($Target -eq 'project') {
-    $skillsDir   = Join-Path $PWD '.claude\skills'
+    $skillsDir    = Join-Path $PWD '.claude\skills'
     $settingsFile = Join-Path $PWD '.claude\settings.json'
+    $claudeMd     = Join-Path $PWD 'CLAUDE.md'
 } else {
-    $skillsDir   = Join-Path $HOME '.claude\skills'
+    $skillsDir    = Join-Path $HOME '.claude\skills'
     $settingsFile = Join-Path $HOME '.claude\settings.json'
+    $claudeMd     = Join-Path $HOME '.claude\CLAUDE.md'
 }
 
 $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("rocky-skills." + [guid]::NewGuid().ToString('N').Substring(0,8))
@@ -50,6 +58,40 @@ try {
     }
     Copy-Item -Path (Join-Path $extracted.FullName 'skills\hail-mary-rocky') -Destination $skillsDir -Recurse -Force
     Write-Host "✔ installed skill -> $destPath\"
+
+    if (-not $SkipClaudeMd) {
+        $agentsSrc   = Join-Path $extracted.FullName 'AGENTS.md'
+        $startMarker = '<!-- rocky-skills:start -->'
+        $endMarker   = '<!-- rocky-skills:end -->'
+        $claudeMdDir = Split-Path $claudeMd -Parent
+        New-Item -ItemType Directory -Path $claudeMdDir -Force | Out-Null
+
+        $blockBody = (Get-Content $agentsSrc -Raw).TrimEnd("`r","`n")
+        $newBlock  = "$startMarker`n$blockBody`n$endMarker"
+
+        if (-not (Test-Path $claudeMd)) {
+            Set-Content -Path $claudeMd -Value $newBlock -Encoding UTF8
+            Write-Host "✔ created $claudeMd with rocky-skills block (always-on)"
+        } else {
+            $existing = Get-Content $claudeMd -Raw
+            $startIdx = $existing.IndexOf($startMarker)
+            if ($startIdx -ge 0) {
+                $endIdx = $existing.IndexOf($endMarker, $startIdx)
+                if ($endIdx -ge 0) {
+                    $endIdx += $endMarker.Length
+                    $updated = $existing.Substring(0, $startIdx) + $newBlock + $existing.Substring($endIdx)
+                    Set-Content -Path $claudeMd -Value $updated -Encoding UTF8
+                    Write-Host "✔ refreshed rocky-skills block in $claudeMd"
+                } else {
+                    Add-Content -Path $claudeMd -Value "`n$newBlock"
+                    Write-Host "✔ appended rocky-skills block to $claudeMd (start marker found, end missing)"
+                }
+            } else {
+                Add-Content -Path $claudeMd -Value "`n$newBlock"
+                Write-Host "✔ appended rocky-skills block to $claudeMd (always-on)"
+            }
+        }
+    }
 
     if ($WithSpinner) {
         $spinnerSrc = Join-Path $extracted.FullName 'skills\hail-mary-rocky\assets\spinner-verbs.json'
