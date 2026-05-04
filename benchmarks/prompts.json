@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "description": "Token-reduction benchmark prompts. Each prompt is sent twice — once without the Rocky system prompt (baseline) and once with it (treatment). Output token counts are compared.",
+  "prompts": [
+    {
+      "id": "react-rerender",
+      "category": "debugging",
+      "language": "ko",
+      "prompt": "React 컴포넌트가 계속 리렌더링되는데 원인이 뭐야?"
+    },
+    {
+      "id": "support-overworked",
+      "category": "support",
+      "language": "ko",
+      "prompt": "나 오늘 일이 너무 많아서 힘들어"
+    },
+    {
+      "id": "arch-monolith-coupling",
+      "category": "planning",
+      "language": "ko",
+      "prompt": "auth, billing, notification이 한 서비스에 다 들어있는데 괜찮아?"
+    },
+    {
+      "id": "sql-query-optimization",
+      "category": "debugging",
+      "language": "ko",
+      "prompt": "이 SQL 어떻게 더 빨라질 수 있어? `SELECT * FROM orders WHERE user_id = ? AND created_at > ?` orders 테이블이 천만 row야."
+    },
+    {
+      "id": "git-rebase-conflict",
+      "category": "how-to",
+      "language": "ko",
+      "prompt": "git rebase하다 충돌 났는데 어떻게 풀어야 해?"
+    },
+    {
+      "id": "ts-type-narrowing",
+      "category": "how-to",
+      "language": "ko",
+      "prompt": "TypeScript에서 `string | undefined`를 `string`으로 좁히는 가장 깔끔한 방법은?"
+    },
+    {
+      "id": "short-yes-no",
+      "category": "trivial",
+      "language": "ko",
+      "prompt": "Promise.all과 Promise.allSettled 차이 한 줄로?"
+    },
+    {
+      "id": "python-listcomp-vs-generator",
+      "category": "how-to",
+      "language": "en",
+      "prompt": "When should I prefer a generator expression over a list comprehension in Python?"
+    }
+  ]
+}

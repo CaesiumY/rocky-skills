@@ -1,0 +1,99 @@
+{
+  "results": [
+    {
+      "id": "react-rerender",
+      "category": "debugging",
+      "language": "ko",
+      "prompt": "React 컴포넌트가 계속 리렌더링되는데 원인이 뭐야?",
+      "baseline_tokens": 1024,
+      "rocky_tokens": 358,
+      "reduction_pct": 65.0,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "support-overworked",
+      "category": "support",
+      "language": "ko",
+      "prompt": "나 오늘 일이 너무 많아서 힘들어",
+      "baseline_tokens": 53,
+      "rocky_tokens": 77,
+      "reduction_pct": -45.3,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "arch-monolith-coupling",
+      "category": "planning",
+      "language": "ko",
+      "prompt": "auth, billing, notification이 한 서비스에 다 들어있는데 괜찮아?",
+      "baseline_tokens": 1023,
+      "rocky_tokens": 390,
+      "reduction_pct": 61.9,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "sql-query-optimization",
+      "category": "debugging",
+      "language": "ko",
+      "prompt": "이 SQL 어떻게 더 빨라질 수 있어? `SELECT * FROM orders WHERE user_id = ? AND created_at > ?` orders 테이블이 천만 row야.",
+      "baseline_tokens": 1024,
+      "rocky_tokens": 429,
+      "reduction_pct": 58.1,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "git-rebase-conflict",
+      "category": "how-to",
+      "language": "ko",
+      "prompt": "git rebase하다 충돌 났는데 어떻게 풀어야 해?",
+      "baseline_tokens": 595,
+      "rocky_tokens": 329,
+      "reduction_pct": 44.7,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "ts-type-narrowing",
+      "category": "how-to",
+      "language": "ko",
+      "prompt": "TypeScript에서 `string | undefined`를 `string`으로 좁히는 가장 깔끔한 방법은?",
+      "baseline_tokens": 851,
+      "rocky_tokens": 402,
+      "reduction_pct": 52.8,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "short-yes-no",
+      "category": "trivial",
+      "language": "ko",
+      "prompt": "Promise.all과 Promise.allSettled 차이 한 줄로?",
+      "baseline_tokens": 72,
+      "rocky_tokens": 49,
+      "reduction_pct": 31.9,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    },
+    {
+      "id": "python-listcomp-vs-generator",
+      "category": "how-to",
+      "language": "en",
+      "prompt": "When should I prefer a generator expression over a list comprehension in Python?",
+      "baseline_tokens": 724,
+      "rocky_tokens": 329,
+      "reduction_pct": 54.6,
+      "model": "claude-sonnet-4-6",
+      "timestamp_utc": "2026-05-04T11:07:29.061100+00:00"
+    }
+  ],
+  "summary": {
+    "n": 8,
+    "mean_reduction_pct": 40.5,
+    "weighted_reduction_pct": 56.0,
+    "total_baseline_tokens": 5366,
+    "total_rocky_tokens": 2363
+  }
+}

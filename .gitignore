@@ -11,6 +11,11 @@ hail-mary-rocky-workspace/
 # User feedback from eval viewer
 feedback.json
 
+# Local secrets (Anthropic API key for benchmarks)
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.pyc
