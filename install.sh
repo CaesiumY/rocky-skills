@@ -57,8 +57,10 @@ if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR/skills/hail-mary-rocky" ]; 
 fi
 
 mkdir -p "$SKILLS_DIR"
-cp -r "$EXTRACTED_DIR/skills/hail-mary-rocky" "$SKILLS_DIR/"
-echo "✔ installed skill -> $SKILLS_DIR/hail-mary-rocky/"
+DEST="$SKILLS_DIR/hail-mary-rocky"
+rm -rf "$DEST"
+cp -r "$EXTRACTED_DIR/skills/hail-mary-rocky" "$DEST"
+echo "✔ installed skill -> $DEST/"
 
 if [ "$WITH_SPINNER" = "1" ]; then
   SPINNER_SRC="$EXTRACTED_DIR/skills/hail-mary-rocky/assets/spinner-verbs.json"
@@ -69,9 +71,10 @@ if [ "$WITH_SPINNER" = "1" ]; then
     if [ -f "$SETTINGS_FILE" ]; then
       tmp="$(mktemp)"
       jq -s '.[0] * .[1]' "$SETTINGS_FILE" "$SPINNER_SRC" > "$tmp"
-      mv "$tmp" "$SETTINGS_FILE"
+      cat "$tmp" > "$SETTINGS_FILE"
+      rm -f "$tmp"
     else
-      cp "$SPINNER_SRC" "$SETTINGS_FILE"
+      cat "$SPINNER_SRC" > "$SETTINGS_FILE"
     fi
     echo "✔ merged spinner verbs into $SETTINGS_FILE"
   else
