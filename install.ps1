@@ -44,8 +44,12 @@ try {
     }
 
     New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
+    $destPath = Join-Path $skillsDir 'hail-mary-rocky'
+    if (Test-Path $destPath) {
+        Remove-Item $destPath -Recurse -Force
+    }
     Copy-Item -Path (Join-Path $extracted.FullName 'skills\hail-mary-rocky') -Destination $skillsDir -Recurse -Force
-    Write-Host "✔ installed skill -> $skillsDir\hail-mary-rocky\"
+    Write-Host "✔ installed skill -> $destPath\"
 
     if ($WithSpinner) {
         $spinnerSrc = Join-Path $extracted.FullName 'skills\hail-mary-rocky\assets\spinner-verbs.json'
