@@ -94,15 +94,38 @@ python benchmarks/render_readme_table.py
 
 ---
 
-## Trigger phrases
+## Activation
 
-Any of these will activate the voice in a Claude Code session (or any other agent reading the adapters):
+**Always-on by default** in 5 of 6 supported agents — drop the adapter file into a project and every reply uses Rocky's voice. No per-session trigger needed. Boundaries (code blocks, commits, legal text) are still respected; the rules in `SKILL.md` handle that automatically.
 
-- "rocky voice", "rocky mode", "caveman mode"
-- "hail mary rocky", "헤일메리"
-- "로키", "로키 말투", "로키 모드", "로키처럼 답해"
+| Agent | Default state after install |
+|---|---|
+| Cursor | always-on (`alwaysApply: true` in `.cursor/rules/rocky.md`) |
+| Windsurf | always-on (`trigger: always_on`) |
+| Cline | always-on (`.clinerules` auto-loaded) |
+| Codex / generic | always-on (`AGENTS.md` auto-loaded) |
+| Gemini CLI | always-on (`GEMINI.md` auto-loaded) |
+| Claude Code | trigger-based by default, see below |
 
-The skill is intentionally eager to trigger — style skills are easy to under-invoke.
+### Claude Code: trigger or always-on
+
+Skills in Claude Code are auto-invoked when language signals match the skill description. With our broad description, the voice activates whenever you mention "rocky" / "로키" / "rocky mode" / "caveman mode" / "헤일메리" or ask for shorter / cheaper / verdict-first replies.
+
+For deterministic always-on (matching the other agents), append the adapter to your `CLAUDE.md`:
+
+```bash
+cat AGENTS.md >> ~/.claude/CLAUDE.md   # global, all projects
+cat AGENTS.md >> ./CLAUDE.md           # current project only
+```
+
+`CLAUDE.md` is loaded into every Claude Code session as base context, so the rules apply without a trigger.
+
+### Switching off and back on
+
+- Disable for the current session: `normal mode` / `일반 모드` / `rocky off` / `stop caveman`
+- Reactivate: `rocky` / `로키` / `rocky mode` / `caveman mode` / `헤일메리`
+
+The off-switch is for one-off tasks where the voice would be inappropriate (long docs, formal email). Next session restarts with the voice on.
 
 ---
 
