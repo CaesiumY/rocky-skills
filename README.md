@@ -96,36 +96,37 @@ python benchmarks/render_readme_table.py
 
 ## Activation
 
-**Always-on by default** in 5 of 6 supported agents — drop the adapter file into a project and every reply uses Rocky's voice. No per-session trigger needed. Boundaries (code blocks, commits, legal text) are still respected; the rules in `SKILL.md` handle that automatically.
+**Always-on by default for all 6 supported agents.** Drop the adapter file into a project (or run the installer) and every reply uses Rocky's voice — no per-session trigger needed. Boundaries (code blocks, commits, legal text) are still respected; the rules in `SKILL.md` handle that automatically.
 
 | Agent | Default state after install |
 |---|---|
+| Claude Code | always-on (rules merged into `CLAUDE.md` by `install.sh` / `install.ps1`) |
 | Cursor | always-on (`alwaysApply: true` in `.cursor/rules/rocky.md`) |
 | Windsurf | always-on (`trigger: always_on`) |
 | Cline | always-on (`.clinerules` auto-loaded) |
 | Codex / generic | always-on (`AGENTS.md` auto-loaded) |
 | Gemini CLI | always-on (`GEMINI.md` auto-loaded) |
-| Claude Code | trigger-based by default, see below |
-
-### Claude Code: trigger or always-on
-
-Skills in Claude Code are auto-invoked when language signals match the skill description. With our broad description, the voice activates whenever you mention "rocky" / "로키" / "rocky mode" / "caveman mode" / "헤일메리" or ask for shorter / cheaper / verdict-first replies.
-
-For deterministic always-on (matching the other agents), append the adapter to your `CLAUDE.md`:
-
-```bash
-cat AGENTS.md >> ~/.claude/CLAUDE.md   # global, all projects
-cat AGENTS.md >> ./CLAUDE.md           # current project only
-```
-
-`CLAUDE.md` is loaded into every Claude Code session as base context, so the rules apply without a trigger.
 
 ### Switching off and back on
+
+The off-switch is for one-off tasks where the voice would be inappropriate (long docs, formal email):
 
 - Disable for the current session: `normal mode` / `일반 모드` / `rocky off` / `stop caveman`
 - Reactivate: `rocky` / `로키` / `rocky mode` / `caveman mode` / `헤일메리`
 
-The off-switch is for one-off tasks where the voice would be inappropriate (long docs, formal email). Next session restarts with the voice on.
+Next session restarts with the voice on.
+
+### Skipping the CLAUDE.md merge (Claude Code only)
+
+If you'd rather keep the Claude Code skill purely trigger-based (auto-invoked only when the skill description matches your prompt), pass `--skip-claude-md` to the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CaesiumY/rocky-skills/main/install.sh | bash -s -- --skip-claude-md
+# PowerShell
+iex "& { $(irm https://raw.githubusercontent.com/CaesiumY/rocky-skills/main/install.ps1) } -SkipClaudeMd"
+```
+
+The installer manages a marker-bounded block (`<!-- rocky-skills:start --> ... <!-- rocky-skills:end -->`) inside `CLAUDE.md`. Re-running install replaces the block in place, never duplicates it. Remove the block manually to revert.
 
 ---
 
