@@ -17,10 +17,17 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from anthropic import Anthropic
+from anthropic import (
+    Anthropic,
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    RateLimitError,
+)
 from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +37,9 @@ RESULTS_PATH = REPO_ROOT / "benchmarks" / "results.json"
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
+MAX_ATTEMPTS = 3
+BACKOFF_BASE_SECONDS = 2.0
+RETRYABLE_EXCEPTIONS = (APIConnectionError, APITimeoutError, RateLimitError)
 
 
 def strip_frontmatter(text: str) -> str:
@@ -59,8 +69,35 @@ def measure(client: Anthropic, model: str, prompt: str, system: str | None) -> i
     }
     if system is not None:
         kwargs["system"] = system
-    msg = client.messages.create(**kwargs)
-    return msg.usage.output_tokens
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            msg = client.messages.create(**kwargs)
+            return msg.usage.output_tokens
+        except RETRYABLE_EXCEPTIONS as exc:
+            if attempt == MAX_ATTEMPTS:
+                raise
+            wait = BACKOFF_BASE_SECONDS ** attempt
+            print(f"  retry {attempt}/{MAX_ATTEMPTS - 1} after {wait:.1f}s ({type(exc).__name__})",
+                  flush=True)
+            time.sleep(wait)
+        except APIStatusError as exc:
+            if exc.status_code >= 500 and attempt < MAX_ATTEMPTS:
+                wait = BACKOFF_BASE_SECONDS ** attempt
+                print(f"  retry {attempt}/{MAX_ATTEMPTS - 1} after {wait:.1f}s (HTTP {exc.status_code})",
+                      flush=True)
+                time.sleep(wait)
+                continue
+            raise
+    raise RuntimeError("unreachable: retry loop exited without returning")
+
+
+def write_results(out_path: Path, results: list[dict]) -> dict:
+    summary = compute_summary(results)
+    out_path.write_text(
+        json.dumps({"results": results, "summary": summary}, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return summary
 
 
 def compute_summary(results: list[dict]) -> dict:
@@ -100,34 +137,41 @@ def main() -> int:
     timestamp = datetime.now(timezone.utc).isoformat()
 
     results: list[dict] = []
-    for p in prompts:
-        pid = p["id"]
-        text = p["prompt"]
-        print(f"[{pid}] baseline...", flush=True)
-        baseline = measure(client, args.model, text, system=None)
-        print(f"[{pid}] rocky...", flush=True)
-        rocky = measure(client, args.model, text, system=system_prompt)
-        reduction = round((baseline - rocky) / baseline * 100, 1) if baseline else 0.0
-        sign = "-" if reduction >= 0 else "+"
-        print(f"[{pid}] baseline={baseline} rocky={rocky} -> {sign}{abs(reduction)}%")
-        results.append({
-            "id": pid,
-            "category": p.get("category"),
-            "language": p.get("language"),
-            "prompt": text,
-            "baseline_tokens": baseline,
-            "rocky_tokens": rocky,
-            "reduction_pct": reduction,
-            "model": args.model,
-            "timestamp_utc": timestamp,
-        })
+    out_path = Path(args.out)
+    try:
+        for p in prompts:
+            pid = p["id"]
+            text = p["prompt"]
+            print(f"[{pid}] baseline...", flush=True)
+            baseline = measure(client, args.model, text, system=None)
+            print(f"[{pid}] rocky...", flush=True)
+            rocky = measure(client, args.model, text, system=system_prompt)
+            reduction = round((baseline - rocky) / baseline * 100, 1) if baseline else 0.0
+            sign = "-" if reduction >= 0 else "+"
+            print(f"[{pid}] baseline={baseline} rocky={rocky} -> {sign}{abs(reduction)}%")
+            results.append({
+                "id": pid,
+                "category": p.get("category"),
+                "language": p.get("language"),
+                "prompt": text,
+                "baseline_tokens": baseline,
+                "rocky_tokens": rocky,
+                "reduction_pct": reduction,
+                "model": args.model,
+                "timestamp_utc": timestamp,
+            })
+            write_results(out_path, results)
+    except (APIConnectionError, APITimeoutError, RateLimitError, APIStatusError) as exc:
+        n_done = len(results)
+        n_total = len(prompts)
+        print(f"\nERROR: API call failed after retries ({type(exc).__name__}): {exc}",
+              file=sys.stderr)
+        if n_done:
+            print(f"Partial results saved: {n_done}/{n_total} prompts -> {out_path}",
+                  file=sys.stderr)
+        return 1
 
     summary = compute_summary(results)
-    out_path = Path(args.out)
-    out_path.write_text(
-        json.dumps({"results": results, "summary": summary}, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
     print(f"\nWrote {out_path} (mean reduction: -{summary['mean_reduction_pct']}%)")
     return 0
 
