@@ -55,7 +55,7 @@ fi
 WORK_DIR="$(mktemp -d -t rocky-skills.XXXXXX)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-TARBALL_URL="https://codeload.github.com/${REPO}/tar.gz/refs/heads/${REF}"
+TARBALL_URL="https://codeload.github.com/${REPO}/tar.gz/${REF}"
 echo "↓ downloading ${REPO}@${REF}"
 curl -fsSL "$TARBALL_URL" -o "$WORK_DIR/repo.tar.gz"
 tar -xzf "$WORK_DIR/repo.tar.gz" -C "$WORK_DIR"
@@ -84,6 +84,12 @@ if [ "$SKIP_CLAUDE_MD" = "0" ]; then
     } > "$CLAUDE_MD"
     echo "✔ created $CLAUDE_MD with rocky-skills block (always-on)"
   elif grep -qF "$START_MARKER" "$CLAUDE_MD"; then
+    if ! grep -qF "$END_MARKER" "$CLAUDE_MD"; then
+      echo "ERROR: $CLAUDE_MD has '$START_MARKER' but no matching '$END_MARKER'." >&2
+      echo "       Refusing to refresh the block — that would silently drop everything after the start marker." >&2
+      echo "       Fix the file (add the end marker, or remove the start marker) and re-run." >&2
+      exit 1
+    fi
     tmp="$(mktemp)"
     awk -v start="$START_MARKER" -v end="$END_MARKER" -v block_file="$AGENTS_SRC" '
       BEGIN {
@@ -113,22 +119,24 @@ fi
 if [ "$WITH_SPINNER" = "1" ]; then
   SPINNER_SRC="$EXTRACTED_DIR/skills/hail-mary-rocky/assets/spinner-verbs.json"
   if [ ! -f "$SPINNER_SRC" ]; then
-    echo "WARN: $SPINNER_SRC missing, skipping spinner install" >&2
-  elif command -v jq >/dev/null 2>&1; then
-    mkdir -p "$(dirname "$SETTINGS_FILE")"
-    if [ -f "$SETTINGS_FILE" ]; then
-      tmp="$(mktemp)"
-      jq -s '.[0] * .[1]' "$SETTINGS_FILE" "$SPINNER_SRC" > "$tmp"
-      cat "$tmp" > "$SETTINGS_FILE"
-      rm -f "$tmp"
-    else
-      cat "$SPINNER_SRC" > "$SETTINGS_FILE"
-    fi
-    echo "✔ merged spinner verbs into $SETTINGS_FILE"
-  else
-    echo "WARN: jq not found — skipping spinner merge."
-    echo "      install jq, or run inside Claude Code: 'rocky spinner'"
+    echo "ERROR: --with-spinner requested but $SPINNER_SRC missing in tarball." >&2
+    exit 1
   fi
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "ERROR: --with-spinner requested but 'jq' is not on PATH." >&2
+    echo "       Install jq, or drop --with-spinner and run 'rocky spinner' inside Claude Code." >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "$SETTINGS_FILE")"
+  if [ -f "$SETTINGS_FILE" ]; then
+    tmp="$(mktemp)"
+    jq -s '.[0] * .[1]' "$SETTINGS_FILE" "$SPINNER_SRC" > "$tmp"
+    cat "$tmp" > "$SETTINGS_FILE"
+    rm -f "$tmp"
+  else
+    cat "$SPINNER_SRC" > "$SETTINGS_FILE"
+  fi
+  echo "✔ merged spinner verbs into $SETTINGS_FILE"
 fi
 
 cat <<EOF

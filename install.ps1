@@ -40,7 +40,7 @@ $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("rocky-skills." + [guid]
 New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 
 try {
-    $tarballUrl = "https://codeload.github.com/$Repo/zip/refs/heads/$Ref"
+    $tarballUrl = "https://codeload.github.com/$Repo/zip/$Ref"
     Write-Host "↓ downloading $Repo@$Ref"
     $zipPath = Join-Path $workDir 'repo.zip'
     Invoke-WebRequest -Uri $tarballUrl -OutFile $zipPath -UseBasicParsing
@@ -83,11 +83,12 @@ try {
                     Set-Content -Path $claudeMd -Value $updated -Encoding UTF8
                     Write-Host "✔ refreshed rocky-skills block in $claudeMd"
                 } else {
-                    Add-Content -Path $claudeMd -Value "`n$newBlock"
-                    Write-Host "✔ appended rocky-skills block to $claudeMd (start marker found, end missing)"
+                    throw "ERROR: $claudeMd has '$startMarker' but no matching '$endMarker'. Refusing to append — that would create two start markers and corrupt the block. Fix the file (add the end marker, or remove the orphan start marker) and re-run."
                 }
             } else {
-                Add-Content -Path $claudeMd -Value "`n$newBlock"
+                $needsLeadingNewline = $existing.Length -gt 0 -and -not $existing.EndsWith("`n")
+                $sep = if ($needsLeadingNewline) { "`n`n" } else { "`n" }
+                [System.IO.File]::AppendAllText($claudeMd, "$sep$newBlock`n", [System.Text.UTF8Encoding]::new($false))
                 Write-Host "✔ appended rocky-skills block to $claudeMd (always-on)"
             }
         }
@@ -96,24 +97,23 @@ try {
     if ($WithSpinner) {
         $spinnerSrc = Join-Path $extracted.FullName 'skills\hail-mary-rocky\assets\spinner-verbs.json'
         if (-not (Test-Path $spinnerSrc)) {
-            Write-Warning "spinner-verbs.json missing in archive, skipping spinner install"
-        } else {
-            $spinnerObj = Get-Content $spinnerSrc -Raw | ConvertFrom-Json
-            $settingsDir = Split-Path $settingsFile -Parent
-            New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
-            if (Test-Path $settingsFile) {
-                $current = Get-Content $settingsFile -Raw | ConvertFrom-Json
-            } else {
-                $current = [pscustomobject]@{}
-            }
-            if ($current.PSObject.Properties.Name -contains 'spinnerVerbs') {
-                $current.spinnerVerbs = $spinnerObj.spinnerVerbs
-            } else {
-                $current | Add-Member -NotePropertyName spinnerVerbs -NotePropertyValue $spinnerObj.spinnerVerbs -Force
-            }
-            $current | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsFile -Encoding UTF8
-            Write-Host "✔ merged spinner verbs into $settingsFile"
+            throw "ERROR: -WithSpinner requested but $spinnerSrc missing in archive."
         }
+        $spinnerObj = Get-Content $spinnerSrc -Raw | ConvertFrom-Json
+        $settingsDir = Split-Path $settingsFile -Parent
+        New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
+        if (Test-Path $settingsFile) {
+            $current = Get-Content $settingsFile -Raw | ConvertFrom-Json
+        } else {
+            $current = [pscustomobject]@{}
+        }
+        if ($current.PSObject.Properties.Name -contains 'spinnerVerbs') {
+            $current.spinnerVerbs = $spinnerObj.spinnerVerbs
+        } else {
+            $current | Add-Member -NotePropertyName spinnerVerbs -NotePropertyValue $spinnerObj.spinnerVerbs -Force
+        }
+        $current | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsFile -Encoding UTF8
+        Write-Host "✔ merged spinner verbs into $settingsFile"
     }
 
     Write-Host ""

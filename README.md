@@ -37,7 +37,7 @@ Per-agent adapter copy: see [Multi-agent support](#multi-agent-support) below.
 
 ## Why output tokens?
 
-Across Claude's model lineup, **output tokens cost ~5× more than input tokens** — Sonnet 4.6 is $3/M in vs $15/M out, Haiku 4.5 is $1/M vs $5/M, Opus 4.x is $15/M vs $75/M. The ratio is the same everywhere. A reply that's twice as long isn't twice as expensive — the longer half dominates the bill.
+Across Claude's current model lineup, **output tokens cost ~5× more than input tokens** — Sonnet 4.6 is $3/M in vs $15/M out, Haiku 4.5 is $1/M vs $5/M, Opus 4.7 is $5/M vs $25/M. The ratio is the same everywhere. A reply that's twice as long isn't twice as expensive — the longer half dominates the bill.
 
 That's why this project is scoped deliberately to **output** compression. It doesn't touch your prompts, system messages, or tool descriptions (the input side — where, for example, [caveman](https://github.com/juliusbrussee/caveman)'s MCP middleware operates). Rocky just makes Claude reply in fewer tokens for the same answer, where each token saved is worth ~5× an input-side token saved.
 

@@ -61,7 +61,15 @@ def load_prompts() -> list[dict]:
     return data["prompts"]
 
 
-def measure(client: Anthropic, model: str, prompt: str, system: str | None) -> int:
+def measure(client: Anthropic, model: str, prompt: str, system: str | None) -> tuple[int, str]:
+    """Send one prompt to the API and return (output_tokens, stop_reason).
+
+    Retries on connection / timeout / rate-limit / 5xx with exponential backoff.
+    4xx errors propagate immediately — they're permanent (bad model id, auth, etc.).
+    Caller should check stop_reason: anything other than "end_turn" / "stop_sequence"
+    means the response was cut off, and the token count is not directly comparable
+    to a complete response.
+    """
     kwargs = {
         "model": model,
         "max_tokens": MAX_TOKENS,
@@ -72,23 +80,23 @@ def measure(client: Anthropic, model: str, prompt: str, system: str | None) -> i
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             msg = client.messages.create(**kwargs)
-            return msg.usage.output_tokens
+            return msg.usage.output_tokens, (msg.stop_reason or "")
         except RETRYABLE_EXCEPTIONS as exc:
             if attempt == MAX_ATTEMPTS:
                 raise
             wait = BACKOFF_BASE_SECONDS ** attempt
-            print(f"  retry {attempt}/{MAX_ATTEMPTS - 1} after {wait:.1f}s ({type(exc).__name__})",
+            print(f"  attempt {attempt}/{MAX_ATTEMPTS} failed ({type(exc).__name__}); retrying in {wait:.1f}s",
                   flush=True)
             time.sleep(wait)
         except APIStatusError as exc:
             if exc.status_code >= 500 and attempt < MAX_ATTEMPTS:
                 wait = BACKOFF_BASE_SECONDS ** attempt
-                print(f"  retry {attempt}/{MAX_ATTEMPTS - 1} after {wait:.1f}s (HTTP {exc.status_code})",
+                print(f"  attempt {attempt}/{MAX_ATTEMPTS} failed (HTTP {exc.status_code}); retrying in {wait:.1f}s",
                       flush=True)
                 time.sleep(wait)
                 continue
             raise
-    raise RuntimeError("unreachable: retry loop exited without returning")
+    raise RuntimeError("unreachable: retry loop exited without returning")  # pragma: no cover
 
 
 def write_results(out_path: Path, results: list[dict]) -> dict:
@@ -143,11 +151,19 @@ def main() -> int:
             pid = p["id"]
             text = p["prompt"]
             print(f"[{pid}] baseline...", flush=True)
-            baseline = measure(client, args.model, text, system=None)
+            baseline, baseline_stop = measure(client, args.model, text, system=None)
             print(f"[{pid}] rocky...", flush=True)
-            rocky = measure(client, args.model, text, system=system_prompt)
+            rocky, rocky_stop = measure(client, args.model, text, system=system_prompt)
+            baseline_truncated = baseline_stop not in ("end_turn", "stop_sequence")
+            rocky_truncated = rocky_stop not in ("end_turn", "stop_sequence")
             reduction = round((baseline - rocky) / baseline * 100, 1) if baseline else 0.0
             sign = "-" if reduction >= 0 else "+"
+            note = ""
+            if baseline_truncated or rocky_truncated:
+                note = (f"  WARN: response cut off "
+                        f"(baseline_stop={baseline_stop!r}, rocky_stop={rocky_stop!r}); "
+                        f"reduction% understates the real saving for this prompt")
+                print(note, flush=True)
             print(f"[{pid}] baseline={baseline} rocky={rocky} -> {sign}{abs(reduction)}%")
             results.append({
                 "id": pid,
@@ -157,6 +173,10 @@ def main() -> int:
                 "baseline_tokens": baseline,
                 "rocky_tokens": rocky,
                 "reduction_pct": reduction,
+                "baseline_stop_reason": baseline_stop,
+                "rocky_stop_reason": rocky_stop,
+                "baseline_truncated": baseline_truncated,
+                "rocky_truncated": rocky_truncated,
                 "model": args.model,
                 "timestamp_utc": timestamp,
             })
